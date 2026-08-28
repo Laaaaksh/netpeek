@@ -2,12 +2,10 @@
 //! every suggestion is a plain-language rule evaluated over the live
 //! process table produced by the sampler.
 
-use crate::catalog::Category;
+use crate::catalog::{Category, NOTABLE_BPS};
 use crate::sampler::ProcessRate;
 use serde::Serialize;
 
-/// Below this a group's traffic is treated as noise, not worth mentioning.
-const NOTABLE_BPS: f64 = 20.0 * 1024.0;
 /// Threshold for calling something a "top consumer".
 const TOP_CONSUMER_BPS: f64 = 50.0 * 1024.0;
 /// How many consecutive active samples counts as "sustained" background chatter.
@@ -118,7 +116,7 @@ fn background_chatter(processes: &[ProcessRate]) -> Vec<Suggestion> {
     processes
         .iter()
         .filter(|p| {
-            p.category == Category::Background
+            p.category == Category::Unrecognized
                 && total_bps(p) >= NOTABLE_BPS
                 && p.sustained_seconds >= SUSTAINED_SAMPLES
         })
@@ -194,6 +192,10 @@ mod tests {
             upload_bps: up,
             pid_count,
             sustained_seconds: sustained,
+            what_it_is: "test fixture".to_string(),
+            verdict: "test fixture".to_string(),
+            breakdown: None,
+            task_manager_hint: None,
         }
     }
 
@@ -213,14 +215,14 @@ mod tests {
 
     #[test]
     fn ignores_background_chatter_below_sustain_threshold() {
-        let processes = vec![process("mystery-daemon", Category::Background, 50_000.0, 0.0, 1, 1)];
+        let processes = vec![process("mystery-daemon", Category::Unrecognized, 50_000.0, 0.0, 1, 1)];
         let suggestions = build(&processes);
         assert!(!suggestions.iter().any(|s| matches!(s.kind, SuggestionKind::Background)));
     }
 
     #[test]
     fn flags_sustained_background_chatter() {
-        let processes = vec![process("mystery-daemon", Category::Background, 50_000.0, 0.0, 4, 1)];
+        let processes = vec![process("mystery-daemon", Category::Unrecognized, 50_000.0, 0.0, 4, 1)];
         let suggestions = build(&processes);
         assert!(suggestions.iter().any(|s| matches!(s.kind, SuggestionKind::Background)));
     }

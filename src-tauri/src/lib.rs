@@ -1,5 +1,7 @@
+mod breakdown;
 mod catalog;
 mod nettop;
+mod procinfo;
 mod sampler;
 mod suggestions;
 
@@ -52,7 +54,8 @@ pub fn run() {
             std::thread::spawn(move || {
                 let mut sampler = Sampler::new();
                 while let Ok(raw_batch) = rx.recv() {
-                    let Some(snapshot) = sampler.ingest(raw_batch) else {
+                    let argv_by_pid = procinfo::snapshot_argv();
+                    let Some(snapshot) = sampler.ingest(raw_batch, &argv_by_pid) else {
                         continue;
                     };
                     let suggestions = suggestions::build(&snapshot.processes);

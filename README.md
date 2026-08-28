@@ -100,13 +100,21 @@ recent macOS versions - the steps above are the current way through it.)
 
 ## Verifying it makes no network calls
 
-Netpeek's only interaction with the outside world is spawning the local
-`/usr/bin/nettop` process - the app itself never opens a socket. Ways to
-confirm this yourself:
+Netpeek's only interactions with the outside world are spawning two local,
+read-only system binaries - the app itself never opens a socket:
+
+- `/usr/bin/nettop`, for per-process byte counters (`src-tauri/src/nettop.rs`).
+- `/bin/ps`, to read a process's command line so a Chromium-family browser's
+  helper processes can be classified as page content, graphics, a supporting
+  service, or an extension (`src-tauri/src/procinfo.rs`). This only reads the
+  local process table; it does not touch the network either.
+
+Ways to confirm this yourself:
 
 - **Read the code**: the Rust core (`src-tauri/src`) has no HTTP client, no
-  networking crate, and no telemetry dependency in `Cargo.toml`. The only
-  process it spawns is `/usr/bin/nettop` (see `src-tauri/src/nettop.rs`).
+  networking crate, and no telemetry dependency in `Cargo.toml` (unchanged
+  by the `ps`-based breakdown - it's a `std::process::Command` call, not a
+  new dependency).
 - **Little Snitch / Lulu / your firewall of choice**: run the app with a
   network-monitoring firewall active and confirm it never prompts for or
   makes an outbound connection.
@@ -131,17 +139,54 @@ every sample:
 5. **Background chatter** - flags a process with no recognized application
    window that has sustained non-trivial traffic for a few consecutive
    samples.
-6. **Browser helper aggregation** - Chrome/Safari/Firefox/Edge/Brave/Arc
+6. **Browser helper aggregation** - Chrome/Safari/Firefox/Edge/Brave/Arc/Opera
    helper, renderer, and GPU processes are merged into a single row under
    their parent browser; when that merge is actually collapsing more than
    one process, a note says so.
+
+## Explaining processes, and breaking browsers open
+
+Every entry in `src-tauri/src/catalog.rs` carries a plain-English sentence
+saying what the process is and a verdict saying whether the user needs to do
+anything - a process Netpeek doesn't recognize is labelled as such rather
+than given an invented explanation. The UI shows both when a process row is
+expanded.
+
+Chromium-family browsers (Chrome, Edge, Brave, Arc, Opera) get a further,
+real breakdown of that expanded row: `procinfo.rs` reads each helper
+process's full command line via `ps`, and `breakdown.rs` classifies it from
+its `--type=`/`--utility-sub-type=`/`--extension-process` flags into page
+content, graphics, a supporting service, or a browser extension. Safari's
+helpers are already named distinctly by process name
+(`com.apple.WebKit.WebContent`/`.Networking`/`.GPU`), so `breakdown.rs`
+classifies those without needing argv. Firefox stays aggregated - its
+multiprocess model doesn't expose a stable, name- or argv-based way to tell
+its helpers apart the way Chromium's does.
+
+Per-tab attribution is not available to an outside app on stable Chrome (the
+API that could do it is Dev-channel only, and the alternative requires
+relaunching Chrome with a remote debugging port, which Netpeek deliberately
+does not do or suggest). When a Chromium-family browser is a significant
+consumer, its expanded row instead points the user at that browser's own
+Task Manager, which can name the exact tab or extension.
+
+One thing to expect when trying this live: modern Chrome routes nearly all
+actual socket I/O - for tabs and extensions alike - through its single
+shared Network Service utility process rather than the renderer that
+requested it, so most of a Chrome row's traffic will usually land in a
+"Network connections" bucket rather than "Page content" or "Browser
+extension" even though the classification logic is correct. This is a limit
+of what `nettop`/`ps` can see from outside the browser, not a bug - see the
+module doc on `breakdown.rs`.
 
 ## Project layout
 
 - `src/` - React + TypeScript UI (Vite, Tailwind CSS, shadcn/ui).
 - `src-tauri/` - Rust core: nettop process management (`nettop.rs`),
-  rate calculation (`sampler.rs`), friendly-name/category mapping
-  (`catalog.rs`), and the suggestion engine (`suggestions.rs`).
+  command-line lookup for browser helpers (`procinfo.rs`), rate calculation
+  (`sampler.rs`), friendly-name/category/explanation mapping (`catalog.rs`),
+  Chromium/Safari helper classification (`breakdown.rs`), and the suggestion
+  engine (`suggestions.rs`).
 
 ## License
 
