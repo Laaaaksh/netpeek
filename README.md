@@ -42,7 +42,8 @@ below for how to check that yourself.
 ## Download and install
 
 1. Go to the [Releases page](https://github.com/Laaaaksh/netpeek/releases)
-   and download the latest `Netpeek-*-macos-arm64.zip`.
+   and download the latest `Netpeek-*-macos-universal.zip`. It's a universal
+   binary that runs natively on both Apple Silicon and Intel Macs.
 2. Unzip it (double-click the file if Finder doesn't do it for you).
 3. Drag `Netpeek.app` into your `Applications` folder.
 4. Open Netpeek from Applications (or Spotlight/Launchpad).
