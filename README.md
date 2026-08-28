@@ -39,6 +39,35 @@ system that runs entirely offline, with no LLM, no API key, and no telemetry.
 See [Verifying it makes no network calls](#verifying-it-makes-no-network-calls)
 below for how to check that yourself.
 
+## Download and install
+
+1. Go to the [Releases page](https://github.com/Laaaaksh/netpeek/releases)
+   and download the latest `Netpeek-*-macos-arm64.zip`.
+2. Unzip it (double-click the file if Finder doesn't do it for you).
+3. Drag `Netpeek.app` into your `Applications` folder.
+4. Open Netpeek from Applications (or Spotlight/Launchpad).
+
+The first time you open it, macOS will refuse and show a dialog saying
+Netpeek "cannot be opened" or is "Not Opened" because Apple cannot verify
+it. This is expected - Netpeek isn't signed with a paid Apple Developer
+certificate (that costs $99/year, and the maintainer hasn't set one up), so
+Gatekeeper doesn't recognize it. The app itself is unaffected; nothing about
+it is broken. To open it anyway:
+
+1. Dismiss the "Not Opened" dialog.
+2. Open **System Settings > Privacy & Security**, and scroll down to the
+   Security section near the bottom.
+3. You'll see a message about Netpeek being blocked - click **Open Anyway**
+   next to it.
+4. Confirm in the prompt that follows (you may need to enter your Mac
+   password or use Touch ID).
+
+You only need to do this once per install. After that, Netpeek opens
+normally like any other app.
+
+(There is no right-click → Open workaround on current macOS versions -
+Apple removed it. System Settings is the only way through.)
+
 ## How it works
 
 Netpeek shells out to macOS's built-in `/usr/bin/nettop` (the same tool
@@ -81,22 +110,10 @@ The bundle is written under `src-tauri/target/release/bundle/macos/`.
 
 ### Gatekeeper note (unsigned build)
 
-Prebuilt releases of Netpeek are ad-hoc signed (so they'll actually launch on
-Apple Silicon) but are **not signed with a paid Apple Developer certificate
-and are not notarized**. macOS Gatekeeper will refuse to open it the first
-time. To run it:
-
-1. Double-click the app. macOS will show a dialog saying it "cannot be
-   opened" because Apple cannot verify it, with no bypass option in that
-   dialog.
-2. Open **System Settings > Privacy & Security**, scroll down to the
-   Security section, and click **Open Anyway** next to the message about
-   Netpeek.
-3. Confirm in the prompt that follows. You only need to do this once per
-   install.
-
-(Right-click → Open no longer bypasses Gatekeeper for unsigned apps as of
-recent macOS versions - the steps above are the current way through it.)
+A build you produce locally is ad-hoc signed, same as the release builds, so
+it hits the same Gatekeeper warning on first launch. See
+[Download and install](#download-and-install) above for the "Open Anyway"
+steps.
 
 ## Verifying it makes no network calls
 

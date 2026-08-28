@@ -1,0 +1,75 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    name: Build Netpeek.app and publish draft release
+    runs-on: macos-14
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Rust build artifacts
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Build Netpeek (frontend + Tauri bundle)
+        run: npm run tauri build -- --verbose
+        env:
+          RUST_BACKTRACE: "1"
+
+      - name: Zip Netpeek.app and compute checksum
+        id: package
+        run: |
+          set -euo pipefail
+          VERSION="${GITHUB_REF_NAME#v}"
+          BUNDLE_DIR="src-tauri/target/release/bundle/macos"
+          ZIP_NAME="Netpeek-${VERSION}-macos-arm64.zip"
+
+          if [ ! -d "$BUNDLE_DIR/Netpeek.app" ]; then
+            echo "::error::Expected app bundle not found at $BUNDLE_DIR/Netpeek.app - tauri build did not produce it. Check the 'Build Netpeek' step above for the underlying cargo/vite error."
+            ls -la "$BUNDLE_DIR" || true
+            exit 1
+          fi
+
+          cd "$BUNDLE_DIR"
+          # ditto (not `zip`) preserves the ad-hoc code signature's resource fork/xattrs correctly.
+          ditto -c -k --sequesterRsrc --keepParent Netpeek.app "$ZIP_NAME"
+          shasum -a 256 "$ZIP_NAME" > "$ZIP_NAME.sha256"
+          cat "$ZIP_NAME.sha256"
+
+          echo "zip_path=$BUNDLE_DIR/$ZIP_NAME" >> "$GITHUB_OUTPUT"
+          echo "checksum_path=$BUNDLE_DIR/$ZIP_NAME.sha256" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Publish draft GitHub Release
+        uses: softprops/action-gh-release@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          draft: true
+          name: "Netpeek ${{ steps.package.outputs.version }}"
+          generate_release_notes: true
+          files: |
+            ${{ steps.package.outputs.zip_path }}
+            ${{ steps.package.outputs.checksum_path }}
