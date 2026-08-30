@@ -8,8 +8,16 @@ each one is taking (download and upload, separately), and plain-English
 suggestions for what's worth doing about it. Open it the moment your internet
 feels slow.
 
-> **Screenshot:** _coming soon - run `npm run tauri dev` to see it live in the
-> meantime._
+## Demo
+
+![Netpeek demo](docs/assets/demo.gif)
+
+The clip shows Netpeek's live per-process bandwidth table updating in real
+time, sorting to the heaviest bandwidth consumer, and the plain-English
+speed suggestion it produces for that app - all without asking for admin
+rights.
+
+Full quality: [docs/assets/demo.mp4](docs/assets/demo.mp4).
 
 ## What it does
 
