@@ -13,9 +13,10 @@ feels slow.
 ![Netpeek demo](docs/assets/demo.gif)
 
 The clip shows Netpeek's live per-process bandwidth table updating in real
-time, sorting to the heaviest bandwidth consumer, and the plain-English
-speed suggestion it produces for that app - all without asking for admin
-rights.
+time against genuine background traffic, the ranked list reordering as the
+heaviest consumer changes, and the plain-English suggestion it produces
+identifying that top bandwidth user - launched with no `sudo` or permission
+prompt.
 
 Full quality: [docs/assets/demo.mp4](docs/assets/demo.mp4).
 

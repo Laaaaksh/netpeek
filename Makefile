@@ -1,7 +1,6 @@
 .PHONY: demo
 
-# Converts a human-recorded screen capture into the README demo assets.
-# The capture step itself can't be automated - see scripts/record-demo/README.md.
-# Usage: make demo [INPUT=path/to/recording.mov]
+# Builds, records, and converts the README demo assets in one go.
+# Usage: make demo [DURATION=65]
 demo:
-	scripts/record-demo/convert.sh $(INPUT)
+	scripts/record-demo/capture.sh $(DURATION)

@@ -4,8 +4,8 @@
 # Usage: scripts/record-demo/convert.sh [input.mov]
 #   input.mov defaults to ~/Desktop/netpeek-demo.mov.
 #
-# See scripts/record-demo/README.md for why the recording itself has to be
-# made by a human and can't be produced by this script.
+# Normally invoked by capture.sh, which produces that input.mov itself via
+# window-mode screencapture - see scripts/record-demo/README.md.
 set -euo pipefail
 
 INPUT="${1:-$HOME/Desktop/netpeek-demo.mov}"
